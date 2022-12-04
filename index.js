@@ -4,6 +4,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const session = require('express-session');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const e = require('express');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 // const MongoStore = require('connect-mongo')(session);
@@ -28,11 +29,6 @@ async function verifyJWT(req, res, next) {
 }
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster1.bsiaqva.mongodb.net/?retryWrites=true&w=majority`;
-// const dbOptions = {
-//     useNewUrlParser: true,
-//     useUnifiedTopology: true
-// }
-// const connection = mongoose.createConnection(uri, dbOptions)
 
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -102,7 +98,16 @@ async function run() {
         // products
         app.get('/products', async (req, res) => {
             const email = req.query.email;
-            const query = { sellerEmail: email }
+            const category = req.query.category;
+            let query;
+            if (category === '' || category === 'allProducts') {
+                query = { sellerEmail: email }
+
+            }
+            else {
+                query = { sellerEmail: email, categoryId: category }
+
+            }
             const products = await productsCollection.find(query).toArray();
             console.log(products)
             res.send(products);
