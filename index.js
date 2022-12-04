@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const session = require('express-session');
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const port = process.env.PORT || 5000;
 // const MongoStore = require('connect-mongo')(session);
@@ -40,6 +40,7 @@ async function run() {
     try {
         const usersCollection = client.db('inventory').collection('users');
         const categoriesCollection = client.db('inventory').collection('categories');
+        const productsCollection = client.db('inventory').collection('products');
 
         // jwt token
         app.get('/jwt', async (req, res) => {
@@ -66,7 +67,46 @@ async function run() {
             res.send(result);
         })
 
-        // app.get('/users')
+        app.post('/categories', async (req, res) => {
+            const categoryInfo = req.body;
+            const result = await categoriesCollection.insertOne(categoryInfo);
+            res.send(result);
+        })
+        app.get('/categories', async (req, res) => {
+            const email = req.query.email;
+            const query = { userEmail: email }
+            const categories = await categoriesCollection.find(query).toArray();
+            console.log(categories)
+            res.send(categories);
+        })
+        // app.get('/allCategories', async (req, res) => {
+        //     const query = {}
+        //     const categories = await categoriesCollection.find(query).toArray();
+        //     console.log(categories)
+        //     res.send(categories);
+        // })
+        app.delete('/categories/:id/:email', async (req, res) => {
+            const email = req.params.email;
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) }
+            const result = await categoriesCollection.deleteOne(query);
+
+            // delete all products
+            const filter = { categoryId: id };
+            const result2 = await productsCollection.deleteMany(filter);
+            console.log(result2)
+            console.log(result)
+            res.send(result);
+        })
+
+        // products
+        app.get('/products', async (req, res) => {
+            const email = req.query.email;
+            const query = { sellerEmail: email }
+            const products = await productsCollection.find(query).toArray();
+            console.log(products)
+            res.send(products);
+        })
 
     } catch (error) {
         console.log(error)
